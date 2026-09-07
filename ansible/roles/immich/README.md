@@ -1,13 +1,25 @@
 # Immich Ansible Role
 
-## Variables Required
-This role requires the following variables to be defined at runtime (e.g., via `extra-vars`):
+Deploys Immich (High-performance self-hosted photo and video management solution) using Podman.
 
-- `immich_storage_path`: Base directory on the host for Immich data.
-- `immich_user`: System user to run the container.
-- `immich_group`: System group to run the container.
-- `immich_port`: Port for the web interface.
+## Required Variables
+Define these at runtime (e.g., in a vars file or via `--extra-vars`):
+
+| Variable | Description |
+| :--- | :--- |
+| `immich_storage_path` | Absolute path for library and database storage. |
+| `immich_user` | System user that will own the storage and run containers. |
+| `immich_group` | System group that will own the storage. |
+| `immich_port` | Host port to expose the Immich web interface. |
 
 ## Usage
-Run the role using the main playbook, providing variables:
-`ansible-playbook -i inventory.ini deploy_services.yml -e "immich_storage_path=/path/to/data immich_user=immichuser ..."`
+Run with the main playbook using tags:
+
+```bash
+ansible-playbook -i inventory.ini deploy_services.yml \
+  --tags immich \
+  -e "immich_storage_path=/mnt/photos" \
+  -e "immich_user=immich" \
+  -e "immich_group=immich" \
+  -e "immich_port=2283"
+```
