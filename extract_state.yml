@@ -1,0 +1,87 @@
+---
+- name: Extract Complete Live State for Storage & Samba
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    samba_conf_path: "/etc/samba/smb.conf"
+
+  tasks:
+    - name: Read raw smb.conf file
+      ansible.builtin.slurp:
+        src: "{{ samba_conf_path }}"
+      register: smb_raw
+
+    - name: Parse entire smb.conf into structured facts
+      ansible.builtin.set_fact:
+        raw_smb_text: "{{ smb_raw.content | b64decode }}"
+
+    - name: Extract all non-default share blocks (excluding global, homes, printers, print$)
+      ansible.builtin.set_fact:
+        captured_shares_raw: "{{ raw_smb_text | regex_findall('\\[(?!global\\]|homes\\]|printers\\]|print\\$\\])[^\\]]+\\].*?(?=\\n\\[|\\Z)', multiline=True, dotall=True) }}"
+
+    - name: Extract paths referenced inside custom shares
+      ansible.builtin.set_fact:
+        share_paths: "{{ raw_smb_text | regex_findall('path\\s*=\\s*(/\\S+)') | unique }}"
+
+    - name: Inspect live directories referenced by Samba
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: "{{ share_paths }}"
+      register: path_stats
+
+    - name: Inspect SELinux contexts for share paths
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        get_attributes: false
+        get_checksum: false
+        get_mime: false
+      loop: "{{ share_paths }}"
+      register: selinux_stats
+
+    - name: Build directory state mapping
+      ansible.builtin.set_fact:
+        dir_states: >-
+          {{
+            dir_states | default([]) + [{
+              'path': item.item,
+              'exists': item.stat.exists,
+              'owner': item.stat.pw_name | default('unknown'),
+              'group': item.stat.gr_name | default('unknown'),
+              'mode': '0' + (item.stat.mode | default(0) | octal),
+              'selinux_type': (selinux_stats.results | selectattr('item', 'equalto', item.item) | map(attribute='stat.secontext') | first | default('::unlabeled').split(':')[2])
+            }]
+          }}
+      loop: "{{ path_stats.results }}"
+
+    - name: Ensure vars directory exists
+      ansible.builtin.file:
+        path: "./vars"
+        state: directory
+        mode: '0755'
+
+    - name: Write true state to vars/generated_vars.yml
+      ansible.builtin.copy:
+        dest: "./vars/generated_vars.yml"
+        mode: '0644'
+        content: |
+          # AUTO-GENERATED LIVE SYSTEM STATE (STRICT INSPECTION)
+          # Generated on: {{ ansible_date_time.iso8601 }}
+
+          # Active Directories & Filesystem State
+          captured_directories:
+          {% for d in dir_states %}
+            - path: "{{ d.path }}"
+              owner: "{{ d.owner }}"
+              group: "{{ d.group }}"
+              mode: "{{ d.mode }}"
+              selinux_type: "{{ d.selinux_type }}"
+          {% endfor %}
+
+          # Full Custom Samba Share Blocks
+          captured_samba_shares: |
+          {% for share in captured_shares_raw %}
+            {{ share | trim | indent(4) }}
+
+          {% endfor %}

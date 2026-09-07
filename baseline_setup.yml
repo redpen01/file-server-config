@@ -1,0 +1,16 @@
+---
+- name: Baseline Server Setup
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Ensure basic system packages are present
+      ansible.builtin.dnf:
+        name:
+          - epel-release
+          - git
+          - htop
+          - curl
+          - policycoreutils-python-utils
+        state: present

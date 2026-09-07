@@ -1,0 +1,109 @@
+---
+- name: Configure Storage, Sharing, and Media Infrastructure
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    shared_group: "datashare"
+    admin_user: "your_username"  # Replace with your actual administrative username
+    storage_path: "/mnt/data"
+
+  tasks:
+    - name: 1. Ensure EPEL and required system packages are installed
+      ansible.builtin.dnf:
+        name:
+          - samba
+          - samba-common
+          - policycoreutils-python-utils
+        state: present
+
+    - name: 2. Ensure unified group exists
+      ansible.builtin.group:
+        name: "{{ shared_group }}"
+        state: present
+
+    - name: 3. Add admin user to shared group
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        groups: "{{ shared_group }}"
+        append: yes
+
+    - name: 4. Ensure storage directory structure and permissions exist
+      ansible.builtin.file:
+        path: "{{ storage_path }}"
+        state: directory
+        group: "{{ shared_group }}"
+        mode: '2775' # Sets 775 permissions AND the SGID bit for group inheritance
+
+    - name: 5. Apply SELinux context to storage path
+      community.general.sefcontext:
+        target: "{{ storage_path }}(/.*)?"
+        setype: samba_share_t
+        state: present
+      notify: Reload SELinux Context
+
+    - name: 6. Enable required SELinux booleans
+      ansible.posix.seboolean:
+        name: "{{ item }}"
+        state: yes
+        persistent: yes
+      loop:
+        - samba_export_all_rw
+        - container_manage_cgroup
+
+    - name: 7. Configure Samba share
+      ansible.builtin.blockinfile:
+        path: /etc/samba/smb.conf
+        block: |
+          [DataShare]
+              comment = Unified Storage Share
+              path = {{ storage_path }}
+              writable = yes
+              browsable = yes
+              guest ok = no
+              valid users = @{{ shared_group }}
+              force group = {{ shared_group }}
+              create mask = 0664
+              force create mode = 0664
+              directory mask = 0775
+              force directory mode = 0775
+              vfs objects = fruit streams_xattr
+              fruit:metadata = stream
+              fruit:model = MacMini
+        marker: "# {mark} ANSIBLE MANAGED SHARE"
+      notify: Restart Samba
+
+    - name: 8. Ensure SFTP umask is configured in sshd_config
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Subsystem\s+sftp'
+        line: 'Subsystem sftp /usr/libexec/openssh/sftp-server -u 002'
+      notify: Restart SSH
+
+    - name: 9. Open firewall ports for Samba
+      ansible.posix.firewalld:
+        service: samba
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: 10. Ensure Samba daemon is running and enabled at boot
+      ansible.builtin.systemd:
+        name: smb
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reload SELinux Context
+      ansible.builtin.command: restorecon -R -v {{ storage_path }}
+
+    - name: Restart Samba
+      ansible.builtin.systemd:
+        name: smb
+        state: restarted
+
+    - name: Restart SSH
+      ansible.builtin.systemd:
+        name: sshd
+        state: restarted
