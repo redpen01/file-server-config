@@ -1,0 +1,20 @@
+---
+- name: Ensure storage directory exists
+  file:
+    path: "{{ syncthing_storage_path }}"
+    state: directory
+    owner: "{{ syncthing_user }}"
+    group: "{{ syncthing_group }}"
+
+- name: Create podman-compose.yml
+  template:
+    src: podman-compose.yml.j2
+    dest: /etc/containers/syncthing/podman-compose.yml
+    owner: "{{ syncthing_user }}"
+    group: "{{ syncthing_group }}"
+
+- name: Deploy Syncthing container
+  containers.podman.podman_compose:
+    project: syncthing
+    files: /etc/containers/syncthing/podman-compose.yml
+    state: present

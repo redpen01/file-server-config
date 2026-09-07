@@ -1,0 +1,17 @@
+# Podman Compose configuration for Syncthing
+# Using variables defined at runtime
+
+services:
+  syncthing:
+    container_name: syncthing
+    image: syncthing/syncthing:latest
+    hostname: syncthing
+    environment:
+      - PUID=1000 # Should be mapped from {{ syncthing_user }}
+      - PGID=1000 # Should be mapped from {{ syncthing_group }}
+    volumes:
+      - {{ syncthing_storage_path }}/data:/var/syncthing
+    ports:
+      - {{ syncthing_web_port }}:8384
+      - {{ syncthing_listen_port }}:22000
+      - {{ syncthing_listen_port }}:22000/udp

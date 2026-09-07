@@ -1,0 +1,19 @@
+# Podman Compose configuration for Immich
+# Using variables defined at runtime
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:release
+    volumes:
+      - {{ immich_storage_path }}/library:/usr/src/app/upload
+    ports:
+      - {{ immich_port }}:3001
+    environment:
+      - DB_HOSTNAME=immich_postgres
+      # ... other environment variables ...
+
+  immich-postgres:
+    container_name: immich_postgres
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0
+    # ...

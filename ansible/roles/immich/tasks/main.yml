@@ -1,0 +1,20 @@
+---
+- name: Ensure storage directory exists
+  file:
+    path: "{{ immich_storage_path }}"
+    state: directory
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+
+- name: Create podman-compose.yml
+  template:
+    src: podman-compose.yml.j2
+    dest: /etc/containers/immich/podman-compose.yml
+    owner: "{{ immich_user }}"
+    group: "{{ immich_group }}"
+
+- name: Deploy Immich container
+  containers.podman.podman_compose:
+    project: immich
+    files: /etc/containers/immich/podman-compose.yml
+    state: present
