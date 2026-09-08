@@ -32,11 +32,20 @@
   become: false
 
 - name: Deploy Syncthing container
-  containers.podman.podman_compose:
-    project: syncthing
-    files: "{{ syncthing_config_dir | default(ansible_user_dir ~ '/.config/containers/syncthing') }}/podman-compose.yml"
-    state: present
+  containers.podman.podman_container:
+    name: syncthing
+    image: syncthing/syncthing:latest
+    hostname: syncthing
+    state: started
+    restart_policy: always
+    env:
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - "{{ syncthing_storage_path }}/data:/var/syncthing:Z"
+    ports:
+      - "{{ syncthing_web_port | default(8384) }}:8384"
+      - "{{ syncthing_listen_port | default(22000) }}:22000"
+      - "{{ syncthing_listen_port | default(22000) }}:22000/udp"
     recreate: auto
-    # Ensures it runs as the current user (rootless)
-    rootless: true
   become: false
