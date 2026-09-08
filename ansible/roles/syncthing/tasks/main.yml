@@ -47,5 +47,4 @@
       - "{{ syncthing_web_port | default(8384) }}:8384"
       - "{{ syncthing_listen_port | default(22000) }}:22000"
       - "{{ syncthing_listen_port | default(22000) }}:22000/udp"
-    recreate: auto
   become: false
