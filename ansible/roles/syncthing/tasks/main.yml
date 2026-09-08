@@ -34,7 +34,7 @@
 - name: Deploy Syncthing container
   containers.podman.podman_container:
     name: syncthing
-    image: syncthing/syncthing:latest
+    image: docker.io/syncthing/syncthing:latest
     hostname: syncthing
     state: started
     restart_policy: always
