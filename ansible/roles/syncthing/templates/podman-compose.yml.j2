@@ -10,7 +10,7 @@ services:
       - PUID=1000 # Should be mapped from {{ syncthing_user }}
       - PGID=1000 # Should be mapped from {{ syncthing_group }}
     volumes:
-      - {{ syncthing_storage_path }}/data:/var/syncthing
+      - {{ syncthing_storage_path }}/data:/var/syncthing:Z
     ports:
       - {{ syncthing_web_port }}:8384
       - {{ syncthing_listen_port }}:22000

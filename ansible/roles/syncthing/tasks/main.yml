@@ -1,23 +1,42 @@
 ---
-- name: Ensure storage directory exists
-  file:
-    path: "{{ syncthing_storage_path }}"
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - syncthing_storage_path is defined
+      - syncthing_storage_path | length > 0
+    fail_msg: "'syncthing_storage_path' must be provided at runtime."
+
+- name: Ensure storage directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
     state: directory
+    mode: '0755'
+    setype: container_file_t
+  become: false
+  loop:
+    - "{{ syncthing_storage_path }}"
+    - "{{ syncthing_storage_path }}/data"
 
 - name: Ensure config directory exists
-  file:
-    path: "{{ ansible_env.HOME }}/.config/containers/syncthing"
+  ansible.builtin.file:
+    path: "{{ syncthing_config_dir | default(ansible_user_dir ~ '/.config/containers/syncthing') }}"
     state: directory
+    mode: '0755'
+  become: false
 
 - name: Create podman-compose.yml
-  template:
+  ansible.builtin.template:
     src: podman-compose.yml.j2
-    dest: "{{ ansible_env.HOME }}/.config/containers/syncthing/podman-compose.yml"
+    dest: "{{ syncthing_config_dir | default(ansible_user_dir ~ '/.config/containers/syncthing') }}/podman-compose.yml"
+    mode: '0644'
+  become: false
 
 - name: Deploy Syncthing container
   containers.podman.podman_compose:
     project: syncthing
-    files: "{{ ansible_env.HOME }}/.config/containers/syncthing/podman-compose.yml"
+    files: "{{ syncthing_config_dir | default(ansible_user_dir ~ '/.config/containers/syncthing') }}/podman-compose.yml"
     state: present
+    recreate: auto
     # Ensures it runs as the current user (rootless)
     rootless: true
+  become: false
