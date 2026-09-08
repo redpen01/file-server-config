@@ -1,16 +1,15 @@
 ---
 - name: Deploy Services
   hosts: all
-  become: true
   tasks:
-    - name: Include Immich role
-      include_role:
+    - name: Deploy Immich role
+      ansible.builtin.import_role:
         name: immich
-      when: "'immich' in ansible_run_tags or 'all' in ansible_run_tags"
-      tags: immich
+      tags:
+        - immich
 
-    - name: Include Syncthing role
-      include_role:
+    - name: Deploy Syncthing role
+      ansible.builtin.import_role:
         name: syncthing
-      when: "'syncthing' in ansible_run_tags or 'all' in ansible_run_tags"
-      tags: syncthing
+      tags:
+        - syncthing
