@@ -1,17 +1,34 @@
 # Immich Ansible Role
 
-Deploys Immich (High-performance self-hosted photo and video management solution) using Podman in rootless mode.
+Deploys Immich (high-performance self-hosted photo and video management solution) using Podman in rootless mode.
 
-## Required Variables
-Define these at runtime (e.g., in a vars file or via `--extra-vars`):
+## Variables
+
+### Required Variables
+Define at runtime (e.g., via `--extra-vars` or in a vars file):
 
 | Variable | Description |
 | :--- | :--- |
-| `immich_storage_path` | Absolute path for library and database storage (should be owned by the user running the playbook). |
-| `immich_port` | Host port to expose the Immich web interface. |
+| `immich_storage_path` | Absolute path for library and database storage (owned by the target user). |
+| `immich_port` | Host port to expose the Immich web interface (e.g., `2283`). |
+
+### Optional Variables
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `immich_config_dir` | `~/.config/containers/immich` | Target directory for the generated `podman-compose.yml`. |
+
+## Prerequisites
+
+For rootless containers to remain active across user logouts, enable user lingering on the target host:
+
+```bash
+loginctl enable-linger <username>
+```
 
 ## Usage
-Run with the main playbook using tags. Note: This playbook should be run as your user (not root).
+
+Run with the main services deployment playbook using the `immich` tag:
 
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/deploy_services.yml \
