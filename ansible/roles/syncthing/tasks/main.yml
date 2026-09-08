@@ -3,18 +3,21 @@
   file:
     path: "{{ syncthing_storage_path }}"
     state: directory
-    owner: "{{ syncthing_user }}"
-    group: "{{ syncthing_group }}"
+
+- name: Ensure config directory exists
+  file:
+    path: "{{ ansible_env.HOME }}/.config/containers/syncthing"
+    state: directory
 
 - name: Create podman-compose.yml
   template:
     src: podman-compose.yml.j2
-    dest: /etc/containers/syncthing/podman-compose.yml
-    owner: "{{ syncthing_user }}"
-    group: "{{ syncthing_group }}"
+    dest: "{{ ansible_env.HOME }}/.config/containers/syncthing/podman-compose.yml"
 
 - name: Deploy Syncthing container
   containers.podman.podman_compose:
     project: syncthing
-    files: /etc/containers/syncthing/podman-compose.yml
+    files: "{{ ansible_env.HOME }}/.config/containers/syncthing/podman-compose.yml"
     state: present
+    # Ensures it runs as the current user (rootless)
+    rootless: true
