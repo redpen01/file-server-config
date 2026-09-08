@@ -1,22 +1,36 @@
 ---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - immich_storage_path is defined
+      - immich_storage_path | length > 0
+      - immich_port is defined
+    fail_msg: "'immich_storage_path' and 'immich_port' must be provided at runtime."
+
 - name: Ensure storage directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ immich_storage_path }}"
     state: directory
+    mode: '0755'
+    setype: container_file_t
+  become: false
 
 - name: Ensure config directory exists
-  file:
-    path: "{{ ansible_env.HOME }}/.config/containers/immich"
+  ansible.builtin.file:
+    path: "{{ immich_config_dir | default(ansible_user_dir ~ '/.config/containers/immich') }}"
     state: directory
+    mode: '0755'
+  become: false
 
 - name: Create podman-compose.yml
-  template:
+  ansible.builtin.template:
     src: podman-compose.yml.j2
-    dest: "{{ ansible_env.HOME }}/.config/containers/immich/podman-compose.yml"
+    dest: "{{ immich_config_dir | default(ansible_user_dir ~ '/.config/containers/immich') }}/podman-compose.yml"
+    mode: '0644'
+  become: false
 
-- name: Deploy Immich container
-  containers.podman.podman_compose:
-    project: immich
-    files: "{{ ansible_env.HOME }}/.config/containers/immich/podman-compose.yml"
-    state: present
-    rootless: true
+- name: Deploy Immich container stack
+  ansible.builtin.command:
+    cmd: podman compose -f {{ immich_config_dir | default(ansible_user_dir ~ '/.config/containers/immich') }}/podman-compose.yml up -d
+  become: false
+  changed_when: true
