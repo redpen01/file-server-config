@@ -1,0 +1,6 @@
+galaxy_info:
+  role_name: syncthing
+dependencies: []
+
+collections:
+  - containers.podman
