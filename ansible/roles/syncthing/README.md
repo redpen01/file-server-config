@@ -19,6 +19,8 @@ Define at runtime (e.g., via `--extra-vars` or in a vars file):
 | :--- | :--- | :--- |
 | `syncthing_web_port` | `8384` | Host port for the Syncthing web GUI. |
 | `syncthing_listen_port` | `22000` | Host port for the sync protocol (TCP/UDP). |
+| `syncthing_uid` | `ansible_user_uid` (1000) | User UID passed into container environment (`PUID`). |
+| `syncthing_gid` | `ansible_user_gid` (1000) | Group GID passed into container environment (`PGID`). |
 | `syncthing_config_dir` | `~/.config/containers/syncthing` | Target directory for the generated `podman-compose.yml`. |
 
 ## Prerequisites

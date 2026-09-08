@@ -67,9 +67,9 @@ Deploys rootless Immich photo/video management:
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/deploy_services.yml \
   --tags immich \
-  -e "immich_storage_path=/home/username/photos" \
-  -e "immich_port=2283"
+  -e "immich_storage_path=/home/username/photos"
 ```
+*(Optional port override: `-e "immich_port=2283"`)*
 
 ---
 

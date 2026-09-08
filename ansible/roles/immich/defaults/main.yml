@@ -1,0 +1,4 @@
+---
+# Default port configurations for Immich
+# Note: immich_storage_path is user-provided at runtime and intentionally not defaulted here.
+immich_port: 2283

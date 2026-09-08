@@ -7,8 +7,8 @@ services:
     image: syncthing/syncthing:latest
     hostname: syncthing
     environment:
-      - PUID=1000 # Should be mapped from {{ syncthing_user }}
-      - PGID=1000 # Should be mapped from {{ syncthing_group }}
+      - PUID={{ syncthing_uid | default(ansible_user_uid | default(1000)) }}
+      - PGID={{ syncthing_gid | default(ansible_user_gid | default(1000)) }}
     volumes:
       - {{ syncthing_storage_path }}/data:/var/syncthing:Z
     ports:

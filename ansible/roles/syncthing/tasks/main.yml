@@ -39,8 +39,8 @@
     state: started
     restart_policy: always
     env:
-      PUID: "1000"
-      PGID: "1000"
+      PUID: "{{ syncthing_uid | default(ansible_user_uid | default(1000)) | string }}"
+      PGID: "{{ syncthing_gid | default(ansible_user_gid | default(1000)) | string }}"
     volumes:
       - "{{ syncthing_storage_path }}/data:/var/syncthing:Z"
     ports:

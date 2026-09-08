@@ -4,16 +4,19 @@
     that:
       - immich_storage_path is defined
       - immich_storage_path | length > 0
-      - immich_port is defined
-    fail_msg: "'immich_storage_path' and 'immich_port' must be provided at runtime."
+    fail_msg: "'immich_storage_path' must be provided at runtime."
 
-- name: Ensure storage directory exists
+- name: Ensure storage directories exist
   ansible.builtin.file:
-    path: "{{ immich_storage_path }}"
+    path: "{{ item }}"
     state: directory
     mode: '0755'
     setype: container_file_t
   become: false
+  loop:
+    - "{{ immich_storage_path }}"
+    - "{{ immich_storage_path }}/library"
+    - "{{ immich_storage_path }}/postgres"
 
 - name: Ensure config directory exists
   ansible.builtin.file:

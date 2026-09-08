@@ -6,11 +6,13 @@ services:
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:release
     volumes:
-      - {{ immich_storage_path }}/library:/usr/src/app/upload
+      - {{ immich_storage_path }}/library:/usr/src/app/upload:Z
     ports:
-      - {{ immich_port }}:3001
+      - {{ immich_port | default(2283) }}:3001
     environment:
       - DB_HOSTNAME=immich_postgres
+      - PUID={{ immich_uid | default(ansible_user_uid | default(1000)) }}
+      - PGID={{ immich_gid | default(ansible_user_gid | default(1000)) }}
       # ... other environment variables ...
 
   immich-postgres:
