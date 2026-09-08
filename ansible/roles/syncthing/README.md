@@ -33,11 +33,12 @@ loginctl enable-linger <username>
 
 ## Usage
 
-Run with the main services deployment playbook using the `syncthing` tag:
+Run with the main services deployment playbook using the `syncthing` tag (include `-K` / `--ask-become-pass` so the task can open the required firewall ports `8384/tcp`, `22000/tcp`, `22000/udp`, and `21027/udp`):
 
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/deploy_services.yml \
   --tags syncthing \
+  --ask-become-pass \
   -e "syncthing_storage_path=/home/username/sync"
 ```
 
@@ -46,6 +47,7 @@ To customize network ports:
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/deploy_services.yml \
   --tags syncthing \
+  --ask-become-pass \
   -e "syncthing_storage_path=/home/username/sync" \
   -e "syncthing_web_port=8384" \
   -e "syncthing_listen_port=22000"

@@ -31,6 +31,19 @@
     mode: '0644'
   become: false
 
+- name: Open firewall ports for Syncthing
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+  loop:
+    - "{{ syncthing_web_port | default(8384) }}/tcp"
+    - "{{ syncthing_listen_port | default(22000) }}/tcp"
+    - "{{ syncthing_listen_port | default(22000) }}/udp"
+    - "21027/udp"
+
 - name: Deploy Syncthing container
   containers.podman.podman_container:
     name: syncthing

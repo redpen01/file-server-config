@@ -4,3 +4,4 @@ dependencies: []
 
 collections:
   - containers.podman
+  - ansible.posix
